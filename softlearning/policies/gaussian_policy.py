@@ -19,6 +19,9 @@ class GaussianPolicy(LatentSpacePolicy):
                  input_shapes,
                  output_shape,
                  squash=True,
+
+                 a_scale=1.,
+
                  preprocessor=None,
                  name=None,
                  *args,
@@ -28,6 +31,9 @@ class GaussianPolicy(LatentSpacePolicy):
         self._input_shapes = input_shapes
         self._output_shape = output_shape
         self._squash = squash
+
+        self._a_scale = a_scale
+
         self._name = name
         self._preprocessor = preprocessor
 
@@ -93,7 +99,7 @@ class GaussianPolicy(LatentSpacePolicy):
         )((shift, log_scale_diag, self.latents_input))
 
         squash_bijector = (
-            SquashBijector()
+            SquashBijector(a_scale=self._a_scale)
             if self._squash
             else tfp.bijectors.Identity())
 

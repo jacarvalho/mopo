@@ -55,16 +55,19 @@ GAUSSIAN_POLICY_PARAMS_FOR_DOMAIN = {
                'kwargs': {
                    'hidden_layer_sizes': (H1, H2),
                    'squash': True,
+                   'a_scale':  1.
                }},
     'CartpoleStabilization': {'type': 'GaussianPolicy',
                'kwargs': {
                    'hidden_layer_sizes': (H3,),
                    'squash': True,
+                   'a_scale':  5.
                }},
     'PendulumStartFromBottom': {'type': 'GaussianPolicy',
                'kwargs': {
                    'hidden_layer_sizes': (H3,),
                    'squash': True,
+                   'a_scale': 2.
                }}
 }
 
