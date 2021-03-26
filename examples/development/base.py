@@ -5,9 +5,42 @@ import pdb
 from softlearning.misc.utils import get_git_rev, deep_update
 
 M = 256
+
+H1 = 64
+H2 = 32
+
+H3 = 50
+
 REPARAMETERIZE = True
 
 NUM_COUPLING_LAYERS = 2
+
+Q_PARAMS_FOR_DOMAIN = {
+    # 'halfcheetah': {
+    #     'type': 'double_feedforward_Q_function',
+    #     'kwargs': {
+    #         'hidden_layer_sizes': (H1, H1)
+    #     }
+    # },
+    'maze2d': {
+        'type': 'double_feedforward_Q_function',
+        'kwargs': {
+            'hidden_layer_sizes': (H1, H1)
+        }
+    },
+    'CartpoleStabilization': {
+        'type': 'double_feedforward_Q_function',
+        'kwargs': {
+            'hidden_layer_sizes': (H1, H1)
+        }
+    },
+    'PendulumStartFromBottom': {
+        'type': 'double_feedforward_Q_function',
+        'kwargs': {
+            'hidden_layer_sizes': (H1, H1)
+        }
+    },
+}
 
 GAUSSIAN_POLICY_PARAMS_BASE = {
     'type': 'GaussianPolicy',
@@ -17,7 +50,23 @@ GAUSSIAN_POLICY_PARAMS_BASE = {
     }
 }
 
-GAUSSIAN_POLICY_PARAMS_FOR_DOMAIN = {}
+GAUSSIAN_POLICY_PARAMS_FOR_DOMAIN = {
+    'maze2d': {'type': 'GaussianPolicy',
+               'kwargs': {
+                   'hidden_layer_sizes': (H1, H2),
+                   'squash': True,
+               }},
+    'CartpoleStabilization': {'type': 'GaussianPolicy',
+               'kwargs': {
+                   'hidden_layer_sizes': (H3,),
+                   'squash': True,
+               }},
+    'PendulumStartFromBottom': {'type': 'GaussianPolicy',
+               'kwargs': {
+                   'hidden_layer_sizes': (H3,),
+                   'squash': True,
+               }}
+}
 
 POLICY_PARAMS_BASE = {
     'GaussianPolicy': GAUSSIAN_POLICY_PARAMS_BASE,
@@ -35,12 +84,23 @@ POLICY_PARAMS_FOR_DOMAIN.update({
     'gaussian': POLICY_PARAMS_FOR_DOMAIN['GaussianPolicy'],
 })
 
+
 DEFAULT_MAX_PATH_LENGTH = 1000
 MAX_PATH_LENGTH_PER_DOMAIN = {
     'Point2DEnv': 50,
     'Point2DWallEnv': 50,
     'Pendulum': 200,
+
+    'maze2d': 300,
+    'CartpoleStabilization': 10000,
+    'PendulumStartFromBottom': 500
 }
+
+DEFAULT_MIN_POOL_SIZE = 1000
+MIN_POOL_SIZE_PER_DOMAIN = MAX_PATH_LENGTH_PER_DOMAIN
+MIN_POOL_SIZE_PER_DOMAIN.update({
+    'CartpoleStabilization': 10
+})
 
 ALGORITHM_PARAMS_ADDITIONAL = {
     'MOPO': {
@@ -100,6 +160,11 @@ ALGORITHM_PARAMS_ADDITIONAL = {
 DEFAULT_NUM_EPOCHS = 200
 
 NUM_EPOCHS_PER_DOMAIN = {
+
+    'maze2d': int(500),
+    'CartpoleStabilization': int(500),
+    'PendulumStartFromBottom': int(500),
+
     'Swimmer': int(3e3),
     'Hopper': int(1e3),
     'HalfCheetah': int(500),#int(3e3),
@@ -220,6 +285,7 @@ NUM_CHECKPOINTS = 10
 
 
 def get_variant_spec_base(universe, domain, task, policy, algorithm, env_params):
+
     algorithm_params = deep_update(
         env_params,
         ALGORITHM_PARAMS_PER_DOMAIN.get(domain, {})
@@ -228,6 +294,7 @@ def get_variant_spec_base(universe, domain, task, policy, algorithm, env_params)
         algorithm_params,
         ALGORITHM_PARAMS_ADDITIONAL.get(algorithm, {})
     )
+
     variant_spec = {
         # 'git_sha': get_git_rev(),
 
@@ -249,12 +316,13 @@ def get_variant_spec_base(universe, domain, task, policy, algorithm, env_params)
             POLICY_PARAMS_BASE[policy],
             POLICY_PARAMS_FOR_DOMAIN[policy].get(domain, {})
         ),
-        'Q_params': {
-            'type': 'double_feedforward_Q_function',
-            'kwargs': {
-                'hidden_layer_sizes': (M, M),
-            }
-        },
+        'Q_params': Q_PARAMS_FOR_DOMAIN[domain],
+        # 'Q_params': {
+        #     'type': 'double_feedforward_Q_function',
+        #     'kwargs': {
+        #         'hidden_layer_sizes': (M, M),
+        #     }
+        # },
         'algorithm_params': algorithm_params,
         'replay_pool_params': {
             'type': 'SimpleReplayPool',
@@ -276,8 +344,8 @@ def get_variant_spec_base(universe, domain, task, policy, algorithm, env_params)
             'kwargs': {
                 'max_path_length': MAX_PATH_LENGTH_PER_DOMAIN.get(
                     domain, DEFAULT_MAX_PATH_LENGTH),
-                'min_pool_size': MAX_PATH_LENGTH_PER_DOMAIN.get(
-                    domain, DEFAULT_MAX_PATH_LENGTH),
+                'min_pool_size': MIN_POOL_SIZE_PER_DOMAIN.get(
+                    domain, DEFAULT_MIN_POOL_SIZE),
                 'batch_size': 256,
             }
         },
@@ -301,4 +369,5 @@ def get_variant_spec(args, env_params):
     if args.checkpoint_replay_pool is not None:
         variant_spec['run_params']['checkpoint_replay_pool'] = (
             args.checkpoint_replay_pool)
+
     return variant_spec

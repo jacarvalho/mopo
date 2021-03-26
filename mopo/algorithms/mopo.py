@@ -82,6 +82,11 @@ class MOPO(RLAlgorithm):
             model_load_dir=None,
             penalty_coeff=0.,
             penalty_learned_var=False,
+
+            number_of_samples=None,
+            eval_every_n_epoch=10,
+            bnn_max_epochs=None,
+
             **kwargs,
     ):
         """
@@ -171,13 +176,19 @@ class MOPO(RLAlgorithm):
         assert len(action_shape) == 1, action_shape
         self._action_shape = action_shape
 
+        # TODO: extra
+        self._eval_every_n_epoch = eval_every_n_epoch
+        self._bnn_max_epochs = bnn_max_epochs
+
         self._build()
 
         #### load replay pool data
         self._pool_load_path = pool_load_path
         self._pool_load_max_size = pool_load_max_size
 
-        loader.restore_pool(self._pool, self._pool_load_path, self._pool_load_max_size, save_path=self._log_dir)
+        # loader.restore_pool(self._pool, self._pool_load_path, self._pool_load_max_size, save_path=self._log_dir)
+        loader.restore_pool(self._pool, self._pool_load_path, self._pool_load_max_size, save_path=self._log_dir,
+                            number_of_samples=number_of_samples)
         self._init_pool_size = self._pool.size
         print('[ MOPO ] Starting with pool size: {}'.format(self._init_pool_size))
         ####
@@ -224,7 +235,8 @@ class MOPO(RLAlgorithm):
             self._epoch, self._model_train_freq, self._timestep, self._total_timestep)
         )
 
-        max_epochs = 1 if self._model.model_loaded else None
+        # max_epochs = 1 if self._model.model_loaded else None
+        max_epochs = 1 if self._model.model_loaded else self._bnn_max_epochs
         model_train_metrics = self._train_model(batch_size=256, max_epochs=max_epochs, holdout_ratio=0.2, max_t=self._max_model_t)
         model_metrics.update(model_train_metrics)
         self._log_model()
@@ -270,9 +282,11 @@ class MOPO(RLAlgorithm):
             training_paths = self.sampler.get_last_n_paths(
                 math.ceil(self._epoch_length / self.sampler._max_path_length))
 
-            evaluation_paths = self._evaluation_paths(
-                policy, evaluation_environment)
-            gt.stamp('evaluation_paths')
+            evaluation_paths = False
+            if self._epoch % self._eval_every_n_epoch == 0 or self._epoch == self._n_epochs - 1:
+                evaluation_paths = self._evaluation_paths(
+                    policy, evaluation_environment)
+                gt.stamp('evaluation_paths')
 
             if evaluation_paths:
                 evaluation_metrics = self._evaluate_rollouts(

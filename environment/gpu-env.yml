@@ -6,8 +6,8 @@ channels:
 - conda-forge
 dependencies:
 - python=3.6.5
-- pip>=18.0
-- conda>=4.5.9
+- pip
+- conda
 - patchelf=0.9
-- pip:
-    - -r requirements.txt
+#- pip:
+#    - -r requirements.txt

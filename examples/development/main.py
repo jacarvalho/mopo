@@ -20,6 +20,8 @@ from examples.instrument import run_example_local
 
 import mopo.static
 
+from src.envs.all_envs import *
+
 class ExperimentRunner(tune.Trainable):
     def _setup(self, variant):
         set_seed(variant['run_params']['seed'])
