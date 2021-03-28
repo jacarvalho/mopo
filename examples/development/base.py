@@ -31,13 +31,13 @@ Q_PARAMS_FOR_DOMAIN = {
     'CartpoleStabilization': {
         'type': 'double_feedforward_Q_function',
         'kwargs': {
-            'hidden_layer_sizes': (H3, H3)
+            'hidden_layer_sizes': (H3, )
         }
     },
     'PendulumStartFromBottom': {
         'type': 'double_feedforward_Q_function',
         'kwargs': {
-            'hidden_layer_sizes': (H3, H3)
+            'hidden_layer_sizes': (H3, )
         }
     },
 }
