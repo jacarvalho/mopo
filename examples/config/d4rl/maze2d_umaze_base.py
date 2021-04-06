@@ -19,6 +19,6 @@ params['kwargs'].update({
     'eval_every_n_epoch': 50,
 
     # BNN size of hidden dimensions
-    'hidden_dim': 64,
+    'hidden_dim': 128,
     'bnn_max_epochs': 100,
 })
